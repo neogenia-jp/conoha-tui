@@ -113,6 +113,7 @@ module ConohaTui
       def sort_vpses(vpses, sort_by, sort_order)
         sorted = vpses.sort_by do |v|
           case sort_by
+          when :name_tag     then v.metadata['instance_name_tag'].to_s.downcase
           when :name         then v.name.to_s.downcase
           when :created_at   then v.created_at || Time.at(0)
           when :contract_end_at then v.contract_end_at || Time.at(0)

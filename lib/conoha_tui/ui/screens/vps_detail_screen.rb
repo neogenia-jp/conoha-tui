@@ -114,6 +114,10 @@ module ConohaTui
 
           lines = [
             @tui.text_line(spans: [
+              @tui.text_span(content: "ネームタグ:     ", style: @tui.style(fg: :dark_gray)),
+              @tui.text_span(content: @vps.metadata['instance_name_tag'], style: @tui.style(modifiers: [:bold]))
+            ]),
+            @tui.text_line(spans: [
               @tui.text_span(content: "名前:     ", style: @tui.style(fg: :dark_gray)),
               @tui.text_span(content: @vps.name.to_s, style: @tui.style(modifiers: [:bold]))
             ]),

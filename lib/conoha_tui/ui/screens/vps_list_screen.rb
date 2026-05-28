@@ -8,19 +8,20 @@ module ConohaTui
       class VpsListScreen < BaseScreen
         COLUMNS = [
           { header: "Ver",      width: 4,  field: :vps_version },
-          { header: "ID",       width: 36, field: :id },
-          { header: "名前",     width: 24, field: :name },
+          { header: "ネームタグ", width: 32, field: nil },
+          { header: "作成日",   width: 12, field: nil },
           { header: "CPU",      width: 5,  field: :vcpus },
           { header: "メモリ",   width: 8,  field: :ram_display },
           { header: "状態",     width: 10, field: :status },
-          { header: "作成日",   width: 12, field: nil },
           { header: "契約期限", width: 12, field: nil },
           { header: "割引切符", width: 10, field: nil },
-          { header: "リージョン", width: 6, field: :region }
+          { header: "リージョン", width: 6, field: :region },
+          { header: "ID",       width: 8, field: :id },
+          { header: "名前",     width: 20, field: :name },
         ].freeze
 
         SORT_LABELS = {
-          name:             "名前",
+          name_tag:         "ネームタグ",
           created_at:       "作成日",
           contract_end_at:  "契約期限"
         }.freeze
@@ -120,15 +121,16 @@ module ConohaTui
             @tui.table_row(
               cells: [
                 "v#{vps.vps_version}",
-                vps.id.to_s[0..7] + "…",
-                vps.name.to_s,
+                vps.metadata["instance_name_tag"],
+                date_display(vps.created_at),
                 vps.vcpus.to_s,
                 vps.ram_display,
                 @tui.table_cell(content: status_label(vps), style: status_style),
-                date_display(vps.created_at),
                 date_display(vps.contract_end_at),
                 vps.discount_ticket? ? "あり" : "-",
-                vps.region.to_s
+                vps.region.to_s,
+                vps.id.to_s[0..7] + "…",
+                vps.name.to_s,
               ],
               style: i.even? ? @tui.style(bg: :reset) : nil
             )
