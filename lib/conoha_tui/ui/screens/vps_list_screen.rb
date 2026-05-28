@@ -17,7 +17,7 @@ module ConohaTui
           { header: "割引切符", width: 10, field: nil },
           { header: "リージョン", width: 6, field: :region },
           { header: "ID",       width: 8, field: :id },
-          { header: "名前",     width: 20, field: :name },
+          { header: "収容ホスト", width: 20, field: :host_id },
         ].freeze
 
         SORT_LABELS = {
@@ -56,6 +56,16 @@ module ConohaTui
               ]
             )
             frame.render_widget(render_filter_input, filter_area)
+          elsif @filter
+            filter_area, content_area = @tui.layout_split(
+              content_area,
+              direction: :vertical,
+              constraints: [
+                @tui.constraint_length(3),
+                @tui.constraint_fill(1)
+              ]
+            )
+            frame.render_widget(render_filter_active, filter_area)
           end
 
           frame.render_widget(render_table, content_area)
@@ -130,7 +140,7 @@ module ConohaTui
                 vps.discount_ticket? ? "あり" : "-",
                 vps.region.to_s,
                 vps.id.to_s[0..7] + "…",
-                vps.name.to_s,
+                vps.host_id.to_s,
               ],
               style: i.even? ? @tui.style(bg: :reset) : nil
             )
@@ -158,8 +168,15 @@ module ConohaTui
         def render_filter_input
           @tui.paragraph(
             text: "フィルタ (名前/ホスト): #{@filter_input}█",
-            block: @tui.block(title: "フィルタ入力 (Enter: 確定 / Esc: キャンセル)",
+            block: @tui.block(title: "フィルタ入力 (Enter: 確定 / Esc: キャンセル / Cmd+V: ペースト)",
                               borders: :all)
+          )
+        end
+
+        def render_filter_active
+          @tui.paragraph(
+            text: "フィルタ中: #{@filter}",
+            block: @tui.block(title: "現在のフィルタ", borders: :all)
           )
         end
 
@@ -171,11 +188,13 @@ module ConohaTui
             @vpses       = load_vpses
             @selected_idx = 0
             @status_bar.set_message(@filter ? "フィルタ適用: #{@filter}" : "フィルタ解除")
-          in type: :key, code: "escape"
+          in type: :key, code: "escape" | "esc"
             @filter_mode  = false
             @filter_input = @filter.to_s
           in type: :key, code: "backspace"
             @filter_input = @filter_input[0..-2].to_s
+          in { type: :paste }
+            @filter_input += event.content.to_s.gsub(/\r?\n/, "")
           in type: :key, code: code if code.length == 1
             @filter_input += code
           else

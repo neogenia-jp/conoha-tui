@@ -34,7 +34,7 @@ module ConohaTui
           flavor_id:      data.dig("flavor", "id"),
           created_at:     parse_time(data["created"]),
           updated_at:     parse_time(data["updated"]),
-          host_id:        data["hostId"] || data.dig("OS-EXT-SRV-ATTR:host"),
+          host_id:        data.dig("OS-EXT-SRV-ATTR:host"),
           tenant_id:      data["tenant_id"],
           addresses:      data["addresses"] || {},
           security_groups: (data["security_groups"] || []).map { |sg| sg["name"] },

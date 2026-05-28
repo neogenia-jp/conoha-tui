@@ -84,11 +84,17 @@ module ConohaTui
 
         # 名前または収容ホストで部分一致フィルタ
         def search(query)
-          pattern = "%#{query}%"
-          rows = @db.execute(
-            "SELECT * FROM vpses WHERE name LIKE ? OR host_id LIKE ? ORDER BY name",
+          tokens = query.to_s.split(/[,、]/).map(&:strip).reject(&:empty?)
+          return all if tokens.empty?
+
+          clauses = tokens.map { "(name LIKE ? OR host_id LIKE ?)" }
+          sql = "SELECT * FROM vpses WHERE #{clauses.join(' OR ')} ORDER BY name"
+          params = tokens.flat_map do |token|
+            pattern = "%#{token}%"
             [pattern, pattern]
-          )
+          end
+
+          rows = @db.execute(sql, params)
           rows.map { |row| Models::Vps.from_db(row) }
         end
       end
