@@ -11,6 +11,7 @@ gem "sqlite3", "~> 2.3"
 gem "json", "~> 2.9"
 
 group :development, :test do
+  gem "debug", ">= 1.9", require: false
   gem "minitest", "~> 5.25"
   gem "minitest-reporters", "~> 1.7"
   gem "webmock", "~> 3.24"

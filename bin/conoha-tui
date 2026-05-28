@@ -1,7 +1,54 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "optparse"
+
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+options = {
+  rdebug:      false,
+  rdebug_host: "127.0.0.1",
+  rdebug_port: 12345
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: conoha-tui [options]"
+
+  opts.on("--rdebug", "rdbg リモートデバッグを有効化（attach まで待機）") do
+    options[:rdebug] = true
+  end
+
+  opts.on("--rdebug-host HOST", "rdbg bind ホスト (default: 127.0.0.1)") do |host|
+    options[:rdebug_host] = host
+  end
+
+  opts.on("--rdebug-port PORT", Integer, "rdbg bind ポート (default: rdbg default)") do |port|
+    options[:rdebug_port] = port
+  end
+
+  opts.on("-h", "--help", "ヘルプを表示") do
+    puts opts
+    exit 0
+  end
+end.parse!(ARGV)
+
+if !options[:rdebug] && (options[:rdebug_host] != "127.0.0.1" || options[:rdebug_port])
+  warn "--rdebug-host / --rdebug-port は --rdebug と一緒に指定してください"
+  exit 1
+end
+
+if options[:rdebug]
+  begin
+    ENV["RUBY_DEBUG_OPEN"] = 'true'
+    ENV["RUBY_DEBUG_HOST"] = options[:rdebug_host]
+    ENV["RUBY_DEBUG_PORT"] = options[:rdebug_port].to_s if options[:rdebug_port]
+    require "debug/open_nonstop"
+  rescue LoadError
+    warn "debug gem が見つかりません。"
+    warn "開発環境では development/test グループ込みで bundle install してください。"
+    exit 1
+  end
+end
 
 require "conoha_tui"
 

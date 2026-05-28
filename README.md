@@ -28,6 +28,13 @@ bundle install
 bin/conoha-tui
 ```
 
+本番環境では開発用 gem（`development`, `test`）を除外してインストールしてください。
+
+```sh
+bundle config set without 'development test'
+bundle install --deployment
+```
+
 ---
 
 ## 初回設定
@@ -47,7 +54,7 @@ bin/conoha-tui
 | VPS バージョン | `←` / `→` で選択（`2` / `3`） |
 
 3. `Enter` で保存する
-4. **`1` キーを押して VPS 一覧タブへ移動する**
+4. **`Alt+1` を押して VPS 一覧タブへ移動する**
 
 ---
 
@@ -57,14 +64,40 @@ bin/conoha-tui
 
 | キー | 操作 |
 |------|------|
-| `1` | VPS 一覧 |
-| `2` | 内部ネットワーク |
-| `3` | 追加ディスク |
-| `4` | オブジェクトストレージ |
-| `5` | 設定 |
+| `Alt+1` | VPS 一覧 |
+| `Alt+2` | 内部ネットワーク |
+| `Alt+3` | 追加ディスク |
+| `Alt+4` | オブジェクトストレージ |
+| `Alt+5` | 設定 |
 | `Alt+→` | 次のタブへ |
 | `Alt+←` | 前のタブへ |
 | `q` / `Ctrl+C` | 終了 |
+
+---
+
+## リモートデバッグ（rdbg）
+
+`debug` gem を利用して VS Code からリモートアタッチできます。
+
+```sh
+bin/conoha-tui --rdebug
+```
+
+オプション:
+
+| オプション | 説明 |
+|-----------|------|
+| `--rdebug` | リモートデバッグを有効化（attach まで待機） |
+| `--rdebug-host HOST` | bind ホスト（省略時 `127.0.0.1`） |
+| `--rdebug-port PORT` | bind ポート（省略時は rdbg のデフォルト） |
+
+例:
+
+```sh
+bin/conoha-tui --rdebug --rdebug-host 127.0.0.1 --rdebug-port 12345
+```
+
+`debug` gem は `development,test` グループに入っているため、本番で `development,test` を除外していれば `--rdebug` は有効化できません。
 
 ---
 
