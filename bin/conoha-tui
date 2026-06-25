@@ -6,9 +6,11 @@ require "optparse"
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 options = {
-  rdebug:      false,
-  rdebug_host: "127.0.0.1",
-  rdebug_port: 12345
+  rdebug:            false,
+  rdebug_host:       "127.0.0.1",
+  rdebug_port:       12345,
+  rdebug_host_given: false,
+  rdebug_port_given: false
 }
 
 OptionParser.new do |opts|
@@ -20,10 +22,12 @@ OptionParser.new do |opts|
 
   opts.on("--rdebug-host HOST", "rdbg bind ホスト (default: 127.0.0.1)") do |host|
     options[:rdebug_host] = host
+    options[:rdebug_host_given] = true
   end
 
   opts.on("--rdebug-port PORT", Integer, "rdbg bind ポート (default: rdbg default)") do |port|
     options[:rdebug_port] = port
+    options[:rdebug_port_given] = true
   end
 
   opts.on("-h", "--help", "ヘルプを表示") do
@@ -32,7 +36,7 @@ OptionParser.new do |opts|
   end
 end.parse!(ARGV)
 
-if !options[:rdebug] && (options[:rdebug_host] != "127.0.0.1" || options[:rdebug_port])
+if !options[:rdebug] && (options[:rdebug_host_given] || options[:rdebug_port_given])
   warn "--rdebug-host / --rdebug-port は --rdebug と一緒に指定してください"
   exit 1
 end
