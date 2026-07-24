@@ -79,10 +79,10 @@ module ConohaTui
             move_port_selection(1)
           in type: :key, code: "up" | "k" if @focus == :ports
             move_port_selection(-1)
-          in type: :key, code: "o" if @focus == :ports
+          in type: :key, code: "o"
             open_port_dialog
-          in type: :key, code: "d" | "delete" if @focus == :ports
-            close_port
+          in type: :key, code: "d" | "delete"
+            close_selected_port
           else
             nil
           end
@@ -388,6 +388,12 @@ module ConohaTui
             )
             @ports = load_ports
             @status_bar.set_message("ポート #{@port_dialog_port} を開放しました")
+          rescue Api::BaseClient::ApiError => e
+            if e.status == 409
+              @status_bar.set_error("ポート開放に失敗: すでに同じルールが存在する可能性があります。rキーを押して情報更新を行ってください")
+            else
+              @status_bar.set_error("ポート開放に失敗: #{e.message}")
+            end
           rescue => e
             @status_bar.set_error("ポート開放に失敗: #{e.message}")
           ensure
@@ -395,7 +401,7 @@ module ConohaTui
           end
         end
 
-        def close_port
+        def close_selected_port
           return unless @vps
 
           ingress_ports = @ports.select { |p| p.direction == "ingress" }

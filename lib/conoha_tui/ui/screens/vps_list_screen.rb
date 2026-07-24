@@ -93,7 +93,7 @@ module ConohaTui
             toggle_sort_order
           in type: :key, code: "/"
             enter_filter_mode
-          in type: :key, code: "escape"
+          in type: :key, code: "escape" | "esc"
             clear_filter
           else
             nil
