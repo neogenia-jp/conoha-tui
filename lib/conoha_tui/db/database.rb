@@ -10,7 +10,7 @@ module ConohaTui
     class Database
       include Singleton
 
-      DB_DIR  = File.join(Dir.home, ".local", "share", "conoha-tui")
+      DB_DIR  = File.join(Dir.home, ".config", "conoha-tui")
       DB_FILE = File.join(DB_DIR, "conoha.db")
 
       def initialize

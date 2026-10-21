@@ -93,7 +93,7 @@ module ConohaTui
             toggle_sort_order
           in type: :key, code: "/"
             enter_filter_mode
-          in type: :key, code: "escape"
+          in type: :key, code: "escape" | "esc"
             clear_filter
           else
             nil
@@ -237,10 +237,10 @@ module ConohaTui
 
         def refresh_vpses
           @status_bar.set_message("VPS 情報を更新中...")
-          @services[:vps].refresh_all { |msg| @status_bar.set_message(msg) }
+          errors        = @services[:vps].refresh_all { |msg| @status_bar.set_message(msg) }
           @vpses        = load_vpses
           @selected_idx = 0
-          @status_bar.set_message("VPS 情報を更新しました")
+          report_refresh_result(errors, "VPS 情報を更新しました")
         rescue Api::BaseClient::ApiError => e
           @status_bar.set_error("API エラー: #{e.message}")
         rescue Faraday::Error => e

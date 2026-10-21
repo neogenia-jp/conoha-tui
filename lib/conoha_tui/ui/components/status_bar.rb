@@ -8,7 +8,7 @@ module ConohaTui
       class StatusBar
         def initialize(tui)
           @tui     = tui
-          @message = "準備完了"
+          @message = "準備完了（alt+1〜5でタブ切替、qで終了）"
           @error   = nil
           @updated_at = nil
         end

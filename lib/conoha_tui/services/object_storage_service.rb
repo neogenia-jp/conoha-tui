@@ -4,6 +4,8 @@ module ConohaTui
   module Services
     # オブジェクトストレージ操作のビジネスロジックを担うサービスクラス。
     class ObjectStorageService
+      include AccountRefresh
+
       def initialize(settings)
         @settings = settings
         @obj_repo = Db::Repositories::ObjectStorageRepository.new
@@ -13,8 +15,9 @@ module ConohaTui
         @obj_repo.all
       end
 
+      # @return [Array] 失敗したアカウントの [アカウント名, エラーメッセージ]
       def refresh_all
-        @settings.accounts.each do |account|
+        each_account_collecting_errors do |account|
           refresh_account(account)
           yield account.name if block_given?
         end
@@ -42,7 +45,7 @@ module ConohaTui
       private
 
       def build_auth(account)
-        auth = Api::AuthV2.new(account)
+        auth = account.v3? ? Api::AuthV3.new(account) : Api::AuthV2.new(account)
         auth.authenticate!
       end
     end

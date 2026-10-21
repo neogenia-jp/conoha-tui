@@ -7,17 +7,21 @@ module ConohaTui
       # ConoHa API アカウント情報の登録・編集・削除を行う。
       # 初回起動時は自動的にこの画面が表示される。
       class SettingsScreen < BaseScreen
-        REGIONS  = %w[tyo1 tyo2 tyo3 sin1 sjc1].freeze
+        # ConoHa VPS のバージョンごとにリージョン名が異なる
+        REGIONS_BY_VERSION = {
+          2 => %w[tyo1 tyo2 tyo3 sin1 sjc1].freeze,
+          3 => %w[c3j1].freeze
+        }.freeze
         VERSIONS = [2, 3].freeze
 
         FIELD_LABELS = {
-          name:        "表示名",
-          tenant_name: "テナント名",
-          username:    "ユーザー名",
-          user_id:     "ユーザーID",
-          password:    "パスワード",
-          region:      "リージョン",
-          version:     "VPS バージョン"
+          name:      "表示名",
+          tenant_id: "テナントID",
+          username:  "ユーザー名",
+          user_id:   "ユーザーID",
+          password:  "パスワード",
+          region:    "リージョン",
+          version:   "VPS バージョン"
         }.freeze
 
         def initialize(tui, services)
@@ -72,8 +76,8 @@ module ConohaTui
             @tui.table_row(
               cells: [
                 account.name.to_s,
-                account.v2? ? account.tenant_name.to_s : account.user_id.to_s,
-                account.username.to_s,
+                account.tenant_id.to_s,
+                account.v2? ? account.username.to_s : account.user_id.to_s,
                 account.region.to_s,
                 "v#{account.version}"
               ]
@@ -90,7 +94,7 @@ module ConohaTui
 
           hint = @accounts.empty? ? " [a] キーを押してアカウントを追加してください" : ""
           @tui.table(
-            header:              ["表示名", "テナント/ユーザーID", "ユーザー名", "リージョン", "Ver"],
+            header:              ["表示名", "テナントID", "ユーザー名/ID", "リージョン", "Ver"],
             rows:                rows,
             widths:              widths,
             selected_row:        @accounts.empty? ? nil : @selected_idx,
@@ -188,14 +192,17 @@ module ConohaTui
           in type: :key, code: "enter"
             save_form
           in type: :key, code: "left" if field == :region
-            idx = REGIONS.index(@form[:region].to_s) || 0
-            @form[:region] = REGIONS[(idx - 1) % REGIONS.size]
+            regions = regions_for(@form[:version])
+            idx = regions.index(@form[:region].to_s) || 0
+            @form[:region] = regions[(idx - 1) % regions.size]
           in type: :key, code: "right" if field == :region
-            idx = REGIONS.index(@form[:region].to_s) || 0
-            @form[:region] = REGIONS[(idx + 1) % REGIONS.size]
+            regions = regions_for(@form[:version])
+            idx = regions.index(@form[:region].to_s) || 0
+            @form[:region] = regions[(idx + 1) % regions.size]
           in type: :key, code: "left" | "right" if field == :version
             idx = VERSIONS.index(@form[:version]) || 0
             @form[:version] = VERSIONS[(idx + 1) % VERSIONS.size]
+            @form[:region]  = regions_for(@form[:version]).first
             @form_field = [@form_field, form_fields.size - 1].min
           in type: :key, code: "backspace"
             current = @form[field].to_s
@@ -214,8 +221,8 @@ module ConohaTui
           @mode       = :add
           @form_field = 0
           @form       = {
-            name: "", tenant_name: "", username: "", user_id: "",
-            password: "", region: REGIONS.first, version: 2
+            name: "", tenant_id: "", username: "", user_id: "",
+            password: "", region: regions_for(2).first, version: 2
           }
         end
 
@@ -227,7 +234,7 @@ module ConohaTui
           @form_field = 0
           @form = {
             name:        account.name,
-            tenant_name: account.tenant_name,
+            tenant_id:   account.tenant_id.to_s,
             username:    account.username,
             user_id:     account.user_id.to_s,
             password:    account.password,
@@ -237,9 +244,7 @@ module ConohaTui
         end
 
         def save_form
-          required = @form[:version].to_i == 3 ? %i[name username user_id password region version] :
-                                                 %i[name tenant_name username password region version]
-          empty = required.select { |f| @form[f].to_s.strip.empty? }
+          empty = form_fields.select { |f| @form[f].to_s.strip.empty? }
           if empty.any?
             @status_bar.set_error("必須項目が空です: #{empty.map { |f| field_label(f) }.join(', ')}")
             return
@@ -250,7 +255,7 @@ module ConohaTui
           if @mode == :add
             @settings.add_account(
               name:        attrs[:name],
-              tenant_name: attrs[:tenant_name],
+              tenant_id:   attrs[:tenant_id],
               username:    attrs[:username],
               user_id:     attrs[:user_id],
               password:    attrs[:password],
@@ -280,31 +285,33 @@ module ConohaTui
 
         def form_fields
           if @form[:version].to_i == 3
-            %i[name username user_id tenant_name password region version]
+            %i[name tenant_id user_id password region version]
           else
-            %i[name tenant_name username password region version]
+            %i[name tenant_id username password region version]
           end
         end
 
-        def field_label(field)
-          return "テナントID(任意)" if field == :tenant_name && @form[:version].to_i == 3
+        def regions_for(version)
+          REGIONS_BY_VERSION.fetch(version.to_i, REGIONS_BY_VERSION[2])
+        end
 
+        def field_label(field)
           FIELD_LABELS[field]
         end
 
         def normalized_form_attrs
           attrs = {
             name:        @form[:name].to_s,
-            tenant_name: @form[:tenant_name].to_s,
-            username:    @form[:username].to_s,
-            user_id:     @form[:user_id].to_s,
+            tenant_id:   @form[:tenant_id].to_s.strip,
+            username:    @form[:username].to_s.strip,
+            user_id:     @form[:user_id].to_s.strip,
             password:    @form[:password].to_s,
             region:      @form[:region].to_s,
             version:     @form[:version].to_i
           }
 
           if attrs[:version] == 3
-            attrs[:tenant_name] = ""
+            attrs[:username] = ""
           else
             attrs[:user_id] = ""
           end

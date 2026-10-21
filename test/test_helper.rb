@@ -60,7 +60,7 @@ module Minitest
     def test_account_hash(overrides = {})
       {
         "name"        => "テストアカウント",
-        "tenant_name" => "test_tenant",
+        "tenant_id"   => "test_tenant",
         "username"    => "test_user",
         "password"    => "test_password",
         "region"      => "tyo1",

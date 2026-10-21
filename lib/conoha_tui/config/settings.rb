@@ -6,7 +6,7 @@ require "fileutils"
 module ConohaTui
   module Config
     # アカウント設定を管理するクラス。
-    # 設定は ~/.config/conoha-tui/config.json に保存される。
+    # 設定は ~/.config/conoha-tui/config.json に保存される（キャッシュ DB も同じディレクトリ）。
     class Settings
       CONFIG_DIR  = File.join(Dir.home, ".config", "conoha-tui")
       CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
@@ -31,10 +31,10 @@ module ConohaTui
       end
 
       # アカウントを追加する
-      def add_account(name:, username:, password:, region:, version:, tenant_name: nil, user_id: nil)
+      def add_account(name:, username:, password:, region:, version:, tenant_id: nil, user_id: nil)
         @data["accounts"] << {
           "name"        => name,
-          "tenant_name" => tenant_name,
+          "tenant_id"   => tenant_id,
           "username"    => username,
           "user_id"     => user_id,
           "password"    => password,
@@ -72,7 +72,7 @@ module ConohaTui
       def load
         return DEFAULTS.dup unless File.exist?(CONFIG_FILE)
 
-        JSON.parse(File.read(CONFIG_FILE))
+        JSON.parse(File.read(CONFIG_FILE, encoding: "UTF-8"))
       rescue JSON::ParserError
         DEFAULTS.dup
       end
@@ -85,11 +85,12 @@ module ConohaTui
 
     # 1アカウントの設定を表す値オブジェクト
     class Account
-      attr_reader :name, :tenant_name, :username, :user_id, :password, :region, :version
+      attr_reader :name, :tenant_id, :username, :user_id, :password, :region, :version
 
       def initialize(hash)
         @name        = hash["name"]
-        @tenant_name = hash["tenant_name"]
+        # 旧バージョンの設定ファイルは tenant_name キーで保存していた
+        @tenant_id   = hash["tenant_id"] || hash["tenant_name"]
         @username    = hash["username"]
         @user_id     = hash["user_id"]
         @password    = hash["password"]
@@ -108,7 +109,7 @@ module ConohaTui
       def to_h
         {
           "name"        => @name,
-          "tenant_name" => @tenant_name,
+          "tenant_id"   => @tenant_id,
           "username"    => @username,
           "user_id"     => @user_id,
           "password"    => @password,

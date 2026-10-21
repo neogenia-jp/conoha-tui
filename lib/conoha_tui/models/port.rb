@@ -8,7 +8,8 @@ module ConohaTui
       attr_accessor :id, :rule_id, :sg_id, :sg_name, :server_id,
                     :protocol, :port_min, :port_max, :direction,
                     :remote_ip_prefix, :ethertype,
-                    :account_name, :region
+                    :account_name, :region,
+                    :fetched_at
 
       def initialize(attrs = {})
         attrs.each { |k, v| public_send(:"#{k}=", v) if respond_to?(:"#{k}=") }
@@ -26,7 +27,8 @@ module ConohaTui
           remote_ip_prefix: rule["remote_ip_prefix"],
           ethertype:        rule["ethertype"],
           account_name:     account_name,
-          region:           region
+          region:           region,
+          fetched_at:       Time.now.utc
         )
       end
 
@@ -44,7 +46,8 @@ module ConohaTui
           remote_ip_prefix: row["remote_ip_prefix"],
           ethertype:        row["ethertype"],
           account_name:     row["account_name"],
-          region:           row["region"]
+          region:           row["region"],
+          fetched_at:       parse_time(row["fetched_at"])
         )
       end
 
@@ -73,7 +76,8 @@ module ConohaTui
           remote_ip_prefix: @remote_ip_prefix,
           ethertype:        @ethertype,
           account_name:     @account_name,
-          region:           @region
+          region:           @region,
+          fetched_at:       @fetched_at || Time.now.utc
         }
       end
     end

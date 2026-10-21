@@ -5,6 +5,8 @@ module ConohaTui
     # VPS 操作のビジネスロジックを担うサービスクラス。
     # API クライアントとリポジトリを協調させて VPS の取得・操作を行う。
     class VpsService
+      include AccountRefresh
+
       SORT_FIELDS = %i[name created_at contract_end_at].freeze
 
       def initialize(settings)
@@ -28,8 +30,9 @@ module ConohaTui
 
       # 全アカウントの VPS を API から再取得してキャッシュを更新する
       # @yield [String] 進捗メッセージ
+      # @return [Array] 失敗したアカウントの [アカウント名, エラーメッセージ]
       def refresh_all(&on_progress)
-        @settings.accounts.each do |account|
+        each_account_collecting_errors do |account|
           refresh_account(account, &on_progress)
         end
       end
@@ -124,7 +127,7 @@ module ConohaTui
       end
 
       def build_auth(account)
-        auth = Api::AuthV2.new(account)
+        auth = account.v3? ? Api::AuthV3.new(account) : Api::AuthV2.new(account)
         auth.authenticate!
       end
 

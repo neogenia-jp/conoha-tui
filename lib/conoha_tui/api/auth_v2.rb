@@ -50,7 +50,7 @@ module ConohaTui
       private
 
       def initial_tenant_scope
-        tenant = @account.tenant_name.to_s.strip
+        tenant = @account.tenant_id.to_s.strip
         return tenant unless tenant.empty?
 
         tenant_from_cli_config || ""
@@ -77,11 +77,16 @@ module ConohaTui
           req.headers["Content-Type"] = "application/json"
           req.body = { auth: auth_body }.to_json
         end
-        handle_response(response)
+        unless (200..299).cover?(response.status)
+          detail = response.body.is_a?(Hash) ? response.body.dig("error", "message") : response.body
+          raise AuthError.new("v2 認証エラー (#{response.status}): #{detail}",
+                              status: response.status, body: response.body)
+        end
+        response.body
       end
 
       def resolve_tenant_id
-        tenant = @account.tenant_name.to_s.strip
+        tenant = @account.tenant_id.to_s.strip
         return tenant if tenant.match?(/\A[0-9a-f]{32}\z/i)
         return tenant_from_cli_config if tenant.empty? && tenant_from_cli_config
         return nil unless @token

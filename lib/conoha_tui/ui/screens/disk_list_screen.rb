@@ -126,11 +126,11 @@ module ConohaTui
 
         def refresh_disks
           @status_bar.set_message("ディスク情報を更新中...")
-          @services[:disk].refresh_all { |name| @status_bar.set_message("#{name} 更新中...") }
+          errors        = @services[:disk].refresh_all { |name| @status_bar.set_message("#{name} 更新中...") }
           @disks        = @services[:disk].list
           @vpses        = @services[:vps].list
           @selected_idx = 0
-          @status_bar.set_message("ディスク情報を更新しました")
+          report_refresh_result(errors, "ディスク情報を更新しました")
         rescue Api::BaseClient::ApiError => e
           @status_bar.set_error("API エラー: #{e.message}")
         rescue Faraday::Error => e

@@ -4,6 +4,8 @@ module ConohaTui
   module Services
     # ネットワーク・ポート操作のビジネスロジックを担うサービスクラス。
     class NetworkService
+      include AccountRefresh
+
       def initialize(settings)
         @settings     = settings
         @network_repo = Db::Repositories::NetworkRepository.new
@@ -21,8 +23,9 @@ module ConohaTui
       end
 
       # 全アカウントのネットワーク情報を API から再取得する
+      # @return [Array] 失敗したアカウントの [アカウント名, エラーメッセージ]
       def refresh_all
-        @settings.accounts.each do |account|
+        each_account_collecting_errors do |account|
           refresh_account(account)
           yield account.name if block_given?
         end
@@ -52,6 +55,13 @@ module ConohaTui
         all_ports = build_ports_from_security_groups(sg_list, ports_data, account)
         @port_repo.delete_by_account(account.name, account.region)
         @port_repo.upsert_all(all_ports)
+      end
+
+      def refresh_account_by_name(account_name)
+        account = find_account(account_name)
+        raise "アカウント '#{account_name}' が見つかりません" unless account
+
+        refresh_account(account)
       end
 
       # ポートを開放する（セキュリティグループルールを追加する）
@@ -105,7 +115,7 @@ module ConohaTui
       private
 
       def build_auth(account)
-        auth = Api::AuthV2.new(account)
+        auth = account.v3? ? Api::AuthV3.new(account) : Api::AuthV2.new(account)
         auth.authenticate!
       end
 
@@ -132,24 +142,34 @@ module ConohaTui
 
       def build_ports_from_security_groups(sg_list, ports_data, account)
         # ポートデータからセキュリティグループとサーバーIDのマップを作成する
-        sg_server_map = {}
+        sg_server_map = Hash.new { |h, k| h[k] = [] }
         ports_data.each do |port|
+          next unless port["device_id"] && !port["device_id"].empty?
+
           (port["security_groups"] || []).each do |sg_id|
-            sg_server_map[sg_id] = port["device_id"]
+            sg_server_map[sg_id] << port["device_id"]
           end
         end
 
         sg_list.flat_map do |sg|
-          server_id = sg_server_map[sg["id"]]
-          (sg["security_group_rules"] || []).map do |rule|
-            p = Models::Port.from_api_rule(rule, sg_id: sg["id"],
-                                                 sg_name: sg["name"],
-                                                 account_name: account.name,
-                                                 region: account.region)
-            p.server_id = server_id
-            p
+          server_ids = sg_server_map[sg["id"]].uniq
+          (sg["security_group_rules"] || []).flat_map do |rule|
+            if server_ids.empty?
+              [build_port_for_server(rule, sg, account, nil)]
+            else
+              server_ids.map { |server_id| build_port_for_server(rule, sg, account, server_id) }
+            end
           end
         end
+      end
+
+      def build_port_for_server(rule, sg, account, server_id)
+        p = Models::Port.from_api_rule(rule, sg_id: sg["id"],
+                                             sg_name: sg["name"],
+                                             account_name: account.name,
+                                             region: account.region)
+        p.server_id = server_id
+        p
       end
     end
   end

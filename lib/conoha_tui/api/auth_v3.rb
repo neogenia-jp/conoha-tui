@@ -79,16 +79,13 @@ module ConohaTui
       end
 
       def project_scope
-        tenant = @account.tenant_name.to_s.strip
+        tenant = @account.tenant_id.to_s.strip
         return nil if tenant.empty?
 
         if tenant.match?(/\A[0-9a-f]{32}\z/i)
-          { id: tenant }
+          { project: { id: tenant } }
         else
-          {
-            name:   tenant,
-            domain: { id: "default" }
-          }
+          { project: { name: tenant, domain: { id: "default" } } }
         end
       end
 

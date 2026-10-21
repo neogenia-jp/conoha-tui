@@ -20,7 +20,7 @@ module ConohaTui
 
       def test_empty_returns_false_when_accounts_exist
         @settings.add_account(
-          name: "テスト", tenant_name: "t", username: "u",
+          name: "テスト", tenant_id: "t", username: "u",
           password: "p", region: "tyo1", version: 2
         )
         refute @settings.empty?
@@ -28,7 +28,7 @@ module ConohaTui
 
       def test_add_account
         @settings.add_account(
-          name: "本番",   tenant_name: "prod_tenant",
+          name: "本番",   tenant_id: "prod_tenant",
           username: "prod_user", password: "prod_pass",
           region: "tyo2", version: 3
         )
@@ -36,14 +36,14 @@ module ConohaTui
         accounts = @settings.accounts
         assert_equal 1, accounts.size
         assert_equal "本番",        accounts.first.name
-        assert_equal "prod_tenant", accounts.first.tenant_name
+        assert_equal "prod_tenant", accounts.first.tenant_id
         assert_equal "tyo2",        accounts.first.region
         assert_equal 3,             accounts.first.version
       end
 
       def test_update_account
         @settings.add_account(
-          name: "旧名前", tenant_name: "t", username: "u",
+          name: "旧名前", tenant_id: "t", username: "u",
           password: "p", region: "tyo1", version: 2
         )
 
@@ -53,7 +53,7 @@ module ConohaTui
 
       def test_delete_account
         @settings.add_account(
-          name: "削除対象", tenant_name: "t", username: "u",
+          name: "削除対象", tenant_id: "t", username: "u",
           password: "p", region: "tyo1", version: 2
         )
         @settings.delete_account(0)
@@ -78,7 +78,7 @@ module ConohaTui
         result  = account.to_h
 
         assert_equal hash["name"],        result["name"]
-        assert_equal hash["tenant_name"], result["tenant_name"]
+        assert_equal hash["tenant_id"], result["tenant_id"]
         assert_equal hash["region"],      result["region"]
         assert_equal hash["version"],     result["version"]
       end
