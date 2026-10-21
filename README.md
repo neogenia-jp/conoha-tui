@@ -253,10 +253,13 @@ bundle exec rake test
 
 ## データ保存先
 
-設定ファイルおよびキャッシュ DB は `~/.conoha/` 以下に保存されます。
+設定ファイルおよびキャッシュ DB は `~/.config/conoha-tui/` 以下に保存されます。
 
 ```
-~/.conoha/
-├── config.yml    # アカウント設定
-└── cache.db      # VPS・ネットワーク等のキャッシュ (SQLite)
+~/.config/conoha-tui/
+├── config.json   # アカウント設定 (JSON)
+└── conoha.db     # VPS・ネットワーク等のキャッシュ (SQLite)
 ```
+
+別のマシンへ移す場合は `config.json` をコピーしてください（`conoha.db` はキャッシュなので `r` キーで再取得できます）。
+公式 ConoHa CLI の `~/.conoha/config` とは別物で、このアプリは読み書きしません。
