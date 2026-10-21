@@ -30,6 +30,18 @@ module ConohaTui
                      @auth.endpoints["compute"]
       end
 
+      def test_scope_is_wrapped_in_project
+        account = Config::Account.new(test_account_hash("version" => "3", "tenant_id" => "a" * 32))
+        stub = stub_request(:post, "https://identity.tyo1.conoha.io/v3/auth/tokens")
+               .with { |req| JSON.parse(req.body).dig("auth", "scope", "project", "id") == "a" * 32 }
+               .to_return(status: 201, headers: { "Content-Type" => "application/json", "X-Subject-Token" => "t" },
+                          body: auth_v3_response.to_json)
+
+        AuthV3.new(account).authenticate!
+
+        assert_requested stub
+      end
+
       def test_authenticate_failure_401
         stub_request(:post, "https://identity.tyo1.conoha.io/v3/auth/tokens")
           .to_return(status: 401, body: "")

@@ -211,7 +211,7 @@ module ConohaTui
             highlight_symbol:    "▶ ",
             highlight_spacing:   :when_selected,
             block:               @tui.block(
-              title: "ポート開放状況 (#{ingress_ports.size}件)",
+              title: "ポート開放状況 (#{ingress_ports.size}件) #{port_cache_timestamp_label}",
               borders: :all,
               style: border_style
             )
@@ -353,6 +353,7 @@ module ConohaTui
           begin
             @status_bar.set_message("VPS 情報を再取得中...")
             @vps  = @services[:vps].refresh_vps(@vps)
+            @services[:network].refresh_account_by_name(@vps.account_name)
             @ports = load_ports
             @status_bar.set_message("VPS 情報を更新しました")
           rescue => e
@@ -386,6 +387,7 @@ module ConohaTui
               port:             port_num,
               remote_ip_prefix: @port_dialog_ip
             )
+            @services[:network].refresh_account_by_name(@vps.account_name)
             @ports = load_ports
             @status_bar.set_message("ポート #{@port_dialog_port} を開放しました")
           rescue Api::BaseClient::ApiError => e
@@ -411,6 +413,7 @@ module ConohaTui
           begin
             @status_bar.set_message("ポートをクローズ中...")
             @services[:network].close_port(port, vps: @vps)
+            @services[:network].refresh_account_by_name(@vps.account_name)
             @ports         = load_ports
             @selected_port = [@selected_port, @ports.size - 1].min
             @status_bar.set_message("ポート #{port.port_display} をクローズしました")
@@ -436,6 +439,15 @@ module ConohaTui
 
         def date_display(time)
           time ? time.strftime("%Y-%m-%d") : "-"
+        end
+
+        def datetime_display(time)
+          time ? time.strftime("%Y-%m-%d %H:%M:%S") : "-"
+        end
+
+        def port_cache_timestamp_label
+          timestamp = @ports.map(&:fetched_at).compact.max
+          timestamp ? "(最終更新: #{datetime_display(timestamp)})" : ""
         end
 
         def cpu_display

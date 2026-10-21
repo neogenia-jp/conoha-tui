@@ -79,6 +79,26 @@ module ConohaTui
         assert_equal "test-server-01", vpses.first.name
       end
 
+      def test_refresh_all_continues_after_auth_error
+        bad  = test_account_hash("name" => "bad", "region" => "sin1")
+        good = test_account_hash("name" => "good")
+        @settings.instance_variable_set(:@data, { "accounts" => [bad, good], "default_region" => "tyo1" })
+
+        stub_request(:post, "https://identity.sin1.conoha.io/v2.0/tokens")
+          .to_return(status: 401, headers: { "Content-Type" => "application/json" },
+                     body: { error: { message: "Invalid user / password" } }.to_json)
+        stub_auth_request
+        stub_compute_request([test_server_hash])
+        stub_request(:get, /discount-tickets/)
+          .to_return(status: 200, headers: { "Content-Type" => "application/json" },
+                     body: { discount_tickets: [] }.to_json)
+
+        errors = @service.refresh_all
+
+        assert_equal ["bad"], errors.map(&:first)
+        assert_equal 1, @service.list.size
+      end
+
       private
 
       def insert_sample_vps(name, id: "test-vps-id-001")
@@ -119,6 +139,12 @@ module ConohaTui
             status: 200,
             headers: { "Content-Type" => "application/json" },
             body: { servers: servers }.to_json
+          )
+        stub_request(:get, %r{https://compute.tyo1.conoha.io/v2/tenant001/flavors/.+})
+          .to_return(
+            status: 200,
+            headers: { "Content-Type" => "application/json" },
+            body: { flavor: { id: "g-2gb", name: "g-2gb", vcpus: 2, ram: 2048, disk: 0 } }.to_json
           )
       end
     end

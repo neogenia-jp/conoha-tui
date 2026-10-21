@@ -59,6 +59,17 @@ module ConohaTui
           frame.render_widget(@status_bar.widget, status_area)
         end
 
+        # 全アカウント再取得の結果をステータスバーに表示する。
+        # 一部のアカウントが失敗していてもエラーとして残りの結果と合わせて通知する。
+        def report_refresh_result(errors, success_message)
+          if errors.empty?
+            @status_bar.set_message(success_message)
+          else
+            failed = errors.map { |name, message| "#{name}: #{message}" }.join(" / ")
+            @status_bar.set_error("一部のアカウントで取得に失敗しました（#{failed}）")
+          end
+        end
+
         # サブクラスでキーヒントをセットする
         def setup_hints
         end

@@ -4,6 +4,8 @@ module ConohaTui
   module Services
     # ディスク（ボリューム）操作のビジネスロジックを担うサービスクラス。
     class DiskService
+      include AccountRefresh
+
       def initialize(settings)
         @settings  = settings
         @disk_repo = Db::Repositories::DiskRepository.new
@@ -17,8 +19,9 @@ module ConohaTui
         @disk_repo.find(id)
       end
 
+      # @return [Array] 失敗したアカウントの [アカウント名, エラーメッセージ]
       def refresh_all
-        @settings.accounts.each do |account|
+        each_account_collecting_errors do |account|
           refresh_account(account)
           yield account.name if block_given?
         end
@@ -41,7 +44,7 @@ module ConohaTui
       private
 
       def build_auth(account)
-        auth = Api::AuthV2.new(account)
+        auth = account.v3? ? Api::AuthV3.new(account) : Api::AuthV2.new(account)
         auth.authenticate!
       end
     end

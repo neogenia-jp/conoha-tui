@@ -53,11 +53,15 @@ module ConohaTui
               flavor_id            = excluded.flavor_id,
               updated_at           = excluded.updated_at,
               host_id              = excluded.host_id,
+              tenant_id            = excluded.tenant_id,
               addresses_json       = excluded.addresses_json,
               security_groups_json = excluded.security_groups_json,
               metadata_json        = excluded.metadata_json,
               contract_end_at      = excluded.contract_end_at,
               discount_ticket      = excluded.discount_ticket,
+              account_name         = excluded.account_name,
+              region               = excluded.region,
+              vps_version          = excluded.vps_version,
               fetched_at           = excluded.fetched_at
           SQL
         end

@@ -70,8 +70,9 @@ module ConohaTui
                 "catalog_keys=#{@auth.endpoints.keys.join(',')})"
         end
 
-        # エンドポイントに tenant_id が含まれない場合は付加する
-        url = base.end_with?(tenant_id) ? base : "#{base}/#{tenant_id}"
+        # v2 はエンドポイントに tenant_id が含まれない場合は付加する。
+        # v3 のカタログ (例: .../v2.1) はそのまま使う。
+        url = @auth.respond_to?(:tenant_id) && !base.end_with?(tenant_id) ? "#{base}/#{tenant_id}" : base
         # Faraday の相対パス結合のため末尾スラッシュを保証する
         url.end_with?("/") ? url : "#{url}/"
       end

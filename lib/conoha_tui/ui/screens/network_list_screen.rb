@@ -124,11 +124,11 @@ module ConohaTui
 
         def refresh_networks
           @status_bar.set_message("ネットワーク情報を更新中...")
-          @services[:network].refresh_all { |name| @status_bar.set_message("#{name} 更新中...") }
+          errors        = @services[:network].refresh_all { |name| @status_bar.set_message("#{name} 更新中...") }
           @networks     = @services[:network].list_networks
           @vpses        = @services[:vps].list
           @selected_idx = 0
-          @status_bar.set_message("ネットワーク情報を更新しました")
+          report_refresh_result(errors, "ネットワーク情報を更新しました")
         rescue Api::BaseClient::ApiError => e
           @status_bar.set_error("API エラー: #{e.message}")
         rescue Faraday::Error => e

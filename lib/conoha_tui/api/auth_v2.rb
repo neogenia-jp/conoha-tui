@@ -50,7 +50,7 @@ module ConohaTui
       private
 
       def initial_tenant_scope
-        tenant = @account.tenant_name.to_s.strip
+        tenant = @account.tenant_id.to_s.strip
         return tenant unless tenant.empty?
 
         tenant_from_cli_config || ""
@@ -86,7 +86,7 @@ module ConohaTui
       end
 
       def resolve_tenant_id
-        tenant = @account.tenant_name.to_s.strip
+        tenant = @account.tenant_id.to_s.strip
         return tenant if tenant.match?(/\A[0-9a-f]{32}\z/i)
         return tenant_from_cli_config if tenant.empty? && tenant_from_cli_config
         return nil unless @token

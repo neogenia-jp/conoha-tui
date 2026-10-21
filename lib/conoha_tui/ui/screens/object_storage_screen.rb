@@ -87,12 +87,12 @@ module ConohaTui
 
         def refresh_containers
           @status_bar.set_message("オブジェクトストレージ情報を更新中...")
-          @services[:object_storage].refresh_all do |name|
+          errors = @services[:object_storage].refresh_all do |name|
             @status_bar.set_message("#{name} 更新中...")
           end
           @containers   = @services[:object_storage].list
           @selected_idx = 0
-          @status_bar.set_message("オブジェクトストレージ情報を更新しました")
+          report_refresh_result(errors, "オブジェクトストレージ情報を更新しました")
         rescue Api::BaseClient::ApiError => e
           @status_bar.set_error("API エラー: #{e.message}")
         rescue Faraday::Error => e
