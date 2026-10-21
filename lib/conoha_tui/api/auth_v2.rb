@@ -77,7 +77,12 @@ module ConohaTui
           req.headers["Content-Type"] = "application/json"
           req.body = { auth: auth_body }.to_json
         end
-        handle_response(response)
+        unless (200..299).cover?(response.status)
+          detail = response.body.is_a?(Hash) ? response.body.dig("error", "message") : response.body
+          raise AuthError.new("v2 認証エラー (#{response.status}): #{detail}",
+                              status: response.status, body: response.body)
+        end
+        response.body
       end
 
       def resolve_tenant_id
